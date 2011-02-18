@@ -12,3 +12,6 @@ Javascript documentation is pretty hard to find, so here is some help:
 Things that don't work:
     You can't enter an activity name, St entry refuses the " " when placed in a menu
     We miss a Hamster API to parse activities, open summary window...
+
+Woops, i just forgot something important: copy the hamster@feuloren directory in ~/.local/share/gnome-shell/exensions
+if you want gnome-shell to launch the extension.
