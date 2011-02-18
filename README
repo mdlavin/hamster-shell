@@ -1,0 +1,14 @@
+Ok guys, this is old code I wrote last year, so I guess it doesn't work anymore with a recent build of gnome-shell.
+
+Things you can look at:
+    map a dbus distant object to a local js object
+    add a menu to gnome-shell panel
+
+Javascript documentation is pretty hard to find, so here is some help:
+    mozilla website for general js documentation: https://developer.mozilla.org/en/JavaScript/Reference
+    for St (shell toolkit) you'll have to find documentation in the code itself
+    Use the shell debugging extension "Looking glass" (Alt + F2 then enter "lg" and press Enter), it can introspect js objects
+
+Things that don't work:
+    You can't enter an activity name, St entry refuses the " " when placed in a menu
+    We miss a Hamster API to parse activities, open summary window...
