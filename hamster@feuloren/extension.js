@@ -3,9 +3,10 @@ const St = imports.gi.St;
 const DBus = imports.dbus;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
+const Util = imports.misc.util
 
 const Main = imports.ui.main;
-const Panel = imports.ui.panel;
+const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Tweener = imports.ui.tweener;
 
@@ -195,19 +196,15 @@ function TimeTrackerButton() {
 }
 
 TimeTrackerButton.prototype = {
-    __proto__: Panel.PanelMenuButton.prototype,
+    __proto__: PanelMenu.Button.prototype,
 
     _init: function() {
-        Panel.PanelMenuButton.prototype._init.call(this, St.Align.START);
+        PanelMenu.Button.prototype._init.call(this, St.Align.START);
 
         this._hamster = new HamsterClient();
-        //let hamsterItem = new PopupMenu.PopupBaseMenuItem(true);
-        //this._hamster.actor.set_width(MIN_WIDTH);
-        //hamsterItem.actor.set_child(this._hamster.actor);
-        //this.menu.addMenuItem(hamsterItem);
-        this.activity_category_item = new PopupMenu.PopupBaseMenuItem(false);
-        this.activityCategory = new St.Label({text: "No Activity"});
-        this.activity_category_item.actor.set_child(this.activityCategory);
+
+        this.activity_category_item = new PopupMenu.PopupMenuItem("No Activity", {reactive: false});
+        this.activityCategory = this.activity_category_item.label;
         this.menu.addMenuItem(this.activity_category_item);
         
         this.stop_item = new PopupMenu.PopupMenuItem("Stop Tracking");
@@ -219,13 +216,13 @@ TimeTrackerButton.prototype = {
         this.stop_separator = new PopupMenu.PopupSeparatorMenuItem()
         this.menu.addMenuItem(this.stop_separator);
 
-        let hamsterItem = new PopupMenu.PopupBaseMenuItem(false);
-        hamsterItem.actor.set_child(this._hamster.entry);
+        let hamsterItem = new PopupMenu.PopupBaseMenuItem({reactive: false});
+        hamsterItem.addActor(this._hamster.entry);
         this.menu.addMenuItem(hamsterItem);
 
-        this.start_item = new PopupMenu.PopupBaseMenuItem(false);
+        this.start_item = new PopupMenu.PopupBaseMenuItem({reactive: false});
         this.startTrackingLabel = new St.Label({text: "Start Tracking"});
-        this.start_item.actor.set_child(this.startTrackingLabel);
+        this.start_item.addActor(this.startTrackingLabel);
         this.start_item.connect("activate", Lang.bind(this._hamster, function() {
             let text = this.entry.get_text();
             this.entry.set_text("");
@@ -286,10 +283,10 @@ TimeTrackerButton.prototype = {
     },
 
     _onSummary: function() {
-
+	Util.spawn(['hamster-time-tracker', 'overview']);
     },
 
     _onPrefs: function() {
-
+	Util.spawn(['hamster-time-tracker', 'preferences']);
     },
 };

@@ -1,4 +1,5 @@
-{ "uuid": "hamster@feuloren",
+{ "shell-version": ["3.0.2"],
+  "uuid": "hamster@feuloren",
   "name": "Hamster Time Tracker",
   "description": "Integrate the awesome Hamster Time Tracker in GnomeShell.",
   "url": "http://test.com" }
