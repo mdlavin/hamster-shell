@@ -1,8 +1,6 @@
-Ok guys, this is old code I wrote last year, so I guess it doesn't work anymore with a recent build of gnome-shell.
+This project is based on 'hamster-in-the-shell' from Florent Thévenet at https://gitorious.org/hamster-in-the-shell/hamster-in-the-shell.  I cloned his work and updated it to be useful enough for me.
 
-Things you can look at:
-    map a dbus distant object to a local js object
-    add a menu to gnome-shell panel
+Currently, you can monitor the current task and start new tasks.  Anything more complicted, you have to bring up the classic Hamster UI.
 
 Javascript documentation is pretty hard to find, so here is some help:
     mozilla website for general js documentation: https://developer.mozilla.org/en/JavaScript/Reference
@@ -13,5 +11,4 @@ Things that don't work:
     You can't enter an activity name, St entry refuses the " " when placed in a menu
     We miss a Hamster API to parse activities, open summary window...
 
-Woops, i just forgot something important: copy the hamster@feuloren directory in ~/.local/share/gnome-shell/exensions
-if you want gnome-shell to launch the extension.
+To install copy the hamster@feuloren directory in ~/.local/share/gnome-shell/exensions and restart the shell (with Alt + F2 then enter "r" and press Enter).
