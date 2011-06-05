@@ -239,13 +239,10 @@ TimeTrackerButton.prototype = {
 //                this._parseAndSaveActivityInput(text);
 //         }));
 //        this.menu.addMenuItem(this.start_item);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        this.menu.addAction("Add older activity", Lang.bind(this, this._onSummary));
-        this.menu.addAction("Summary", Lang.bind(this, this._onSummary));
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addAction("Preferences", Lang.bind(this, this._onPrefs));
-        this.menu.addAction("Help", Lang.bind(this, this._onSummary));
+        this.menu.addAction("Show Summary", Lang.bind(this, this._onSummary));
+	this.menu.addAction("Open Hamster", Lang.bind(this, this._onOpenHamster));
 
         this._text = new St.Label({text: "No activity"});
         this.actor.set_child(this._text);
@@ -349,6 +346,10 @@ TimeTrackerButton.prototype = {
 	}));
     },
 
+    _onOpenHamster: function() {
+	Util.spawn(['hamster-time-tracker']);
+    },
+
     _onFactsChanged: function() {
 	// global.log('FactsChanged');
 	this._refreshCurrentTask();
@@ -362,7 +363,4 @@ TimeTrackerButton.prototype = {
 	Util.spawn(['hamster-time-tracker', 'overview']);
     },
 
-    _onPrefs: function() {
-	Util.spawn(['hamster-time-tracker', 'preferences']);
-    },
 };
