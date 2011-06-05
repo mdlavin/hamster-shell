@@ -76,7 +76,7 @@ HamsterClient.prototype = {
          this.stop_button = new St.Button({style_class: 'hamsterButton'});
          this.stop_button.set_child(new St.Label({text: "Stop Tracking"}));
          this.stop_button.connect("clicked", Lang.bind(this, function() {
-	     global.log("About to call StopTrackingRemote");
+	     // global.log("About to call StopTrackingRemote");
 	     try {
 		 this.StopTrackingRemote(0);
 	     } catch (err) {
@@ -111,11 +111,11 @@ HamsterClient.prototype = {
             }
 
             let fact = this._parseActivityInput(text);
-            global.log("activity: -"+fact.activity+"-");
-            global.log("category: -"+fact.category+"-");
-            global.log("desc: -"+fact.description+"-");
-            global.log("start time: -"+fact.start_time+"-");
-            global.log("end time: -"+fact.end_time+"-");
+            //global.log("activity: -"+fact.activity+"-");
+            //global.log("category: -"+fact.category+"-");
+            //global.log("desc: -"+fact.description+"-");
+            //global.log("start time: -"+fact.start_time+"-");
+            //global.log("end time: -"+fact.end_time+"-");
         }));
          this.start_button = new St.Button({style_class: 'hamsterButton'});
          this.start_button.set_child(new St.Label({text: "Start Tracking"}));
@@ -188,16 +188,10 @@ HamsterClient.prototype = {
     },
 
     _parseAndSaveActivityInput: function(text) {
-	global.log("About to call AddFactRemote");
+	// global.log("About to call AddFactRemote");
 	try {
-            this.AddFactRemote(text, "", 0,0, 
-			       Lang.bind(this,
-					 function (factId) {
-					     global.log("AddFactRemote returned " + factId);
-					 }
-					)
-			      );	
-	    global.log("Done calling AddFactRemote");
+            this.AddFactRemote(text, "", 0,0);	
+	    // global.log("Done calling AddFactRemote");
 	} catch (err) {
 	    global.log("Error calling AddFactRemote: " + err);
 	}
@@ -308,8 +302,10 @@ TimeTrackerButton.prototype = {
 				  fact.id = fact[0];
 				  fact.start = fact[1];
 				  fact.end = fact[2];
+				  fact.description = fact[3];
 				  fact.name = fact[4];
 				  fact.category = fact[6];
+				  fact.tags = fact[7];
 				  fact.delta = fact[9];
 				  
 				  if (fact[2] == 0) {
@@ -342,11 +338,10 @@ TimeTrackerButton.prototype = {
 	this._withCurrentFact(Lang.bind(this, function(fact) {
 	    try {
 		let timezoneOffset = (new Date().getTimezoneOffset()) * 60;
-		let end = Math.floor(Date.now()/1000) - timezoneOffset ;
-		global.log("start: " + fact.start + " end: " + end);
-		this._hamster.UpdateFactRemote(fact.id, fact.name, "", fact.start, end);
+		let end = Math.floor(Date.now()/1000) - timezoneOffset;
+		this._hamster.StopTrackingRemote(end);
 	    } catch (err) {
-		global.log("Error calling UpdateFactRemote: " + err);
+		global.log("Error calling StopTrackingRemote: " + err);
 	    }
 	}));
     },
