@@ -25,28 +25,37 @@ const HamsterIface = {
     methods: [{ name: 'GetTags',
                 inSignature: '',
                 outSignature: 'as' },
-                { name: 'GetFactById',
+              { name: 'GetFactById',
                 inSignature: 'i',
                 outSignature: 'a{sv}' },
-                { name: 'GetCurrentFact',
+              { name: 'GetCurrentFact',
                 inSignature: '',
                 outSignature: 'a{sv}' },
-                { name: 'StopTracking',
-                inSignature: '',
+              { name: 'StopTracking',
+                inSignature: 'i',
                 outSignature: ''},
-                { name: 'AddActivity',
-                inSignature: 'ss',
-                outSignature: ''},
-                { name: 'AddCategory',
+              { name: 'AddActivity',
+                inSignature: 'si',
+                outSignature: 'i'},
+              { name: 'GetCategoryId',
+		inSignature: 's',
+		outSignature: 'i'},
+              { name: 'AddCategory',
                 inSignature: 's',
-                outSignature: ''},
-                { name: 'AddFact',
-                inSignature: 'suu',
-                outSignature: 'i'}
-              ],
-    signals: [{name: 'TrackingStopped'},
-              {name: 'FactUpdated',
-              inSignature: 'i'}]
+                outSignature: 'i'},
+              { name: 'AddFact',
+                inSignature: 'ssii',
+                outSignature: 'i'},
+	      { name: 'GetTodaysFacts',
+		inSignature: '',
+		outSignature: 'a(iiissisasii)'},
+	      { name: 'UpdateFact',
+		inSignature: 'issii',
+		outSignature: 'i'}
+             ],
+     signals: [{name: 'TrackingStopped'},
+	       {name: 'FactsChanged'}
+	      ]
 };
 
 function HamsterClient() {
@@ -67,7 +76,12 @@ HamsterClient.prototype = {
          this.stop_button = new St.Button({style_class: 'hamsterButton'});
          this.stop_button.set_child(new St.Label({text: "Stop Tracking"}));
          this.stop_button.connect("clicked", Lang.bind(this, function() {
-            this.StopTrackingRemote();
+	     global.log("About to call StopTrackingRemote");
+	     try {
+		 this.StopTrackingRemote(0);
+	     } catch (err) {
+		 global.log("Error calling StopTrackingRemote: " + err);
+	     }
          }));
          box.add(this.stop_button);
 
@@ -97,11 +111,11 @@ HamsterClient.prototype = {
             }
 
             let fact = this._parseActivityInput(text);
-            print("activity: -"+fact.activity+"-");
-            print("category: -"+fact.category+"-");
-            print("desc: -"+fact.description+"-");
-            print("start time: -"+fact.start_time+"-");
-            print("end time: -"+fact.end_time+"-");
+            global.log("activity: -"+fact.activity+"-");
+            global.log("category: -"+fact.category+"-");
+            global.log("desc: -"+fact.description+"-");
+            global.log("start time: -"+fact.start_time+"-");
+            global.log("end time: -"+fact.end_time+"-");
         }));
          this.start_button = new St.Button({style_class: 'hamsterButton'});
          this.start_button.set_child(new St.Label({text: "Start Tracking"}));
@@ -113,12 +127,11 @@ HamsterClient.prototype = {
          }));
          box.add(this.start_button);
 
-
      },
 
     _parseActivityInput: function(text) {
         let fact = {activity: "", category: "", description: "",
-                    start_time: 0, end_time: 0};
+                    start_time: null, end_time: null};
 
         if (text == '')
             return fact;
@@ -175,17 +188,21 @@ HamsterClient.prototype = {
     },
 
     _parseAndSaveActivityInput: function(text) {
+	global.log("About to call AddFactRemote");
+	try {
+            this.AddFactRemote(text, "", 0,0, 
+			       Lang.bind(this,
+					 function (factId) {
+					     global.log("AddFactRemote returned " + factId);
+					 }
+					)
+			      );	
+	    global.log("Done calling AddFactRemote");
+	} catch (err) {
+	    global.log("Error calling AddFactRemote: " + err);
+	}
 
-        let fact = this._parseActivityInput(text);
-
-        if (fact.activity == "")
-            return;
-
-        this.AddCategoryRemote(fact.category);
-        this.AddActivityRemote(fact.activity, fact.category);
-        this.AddFactRemote(fact.activity, fact.start_time, fact.end_time,
-                Lang.bind(this, function() {}));
-    }
+    },
 
 };
 
@@ -209,9 +226,7 @@ TimeTrackerButton.prototype = {
         
         this.stop_item = new PopupMenu.PopupMenuItem("Stop Tracking");
         this.menu.addMenuItem(this.stop_item);
-        this.stop_item.connect("activate", Lang.bind(this, function() {
-            this._hamster.StopTrackingRemote();
-        }));
+        this.stop_item.connect("activate", Lang.bind(this, this._stopCurrentTask));
 
         this.stop_separator = new PopupMenu.PopupSeparatorMenuItem()
         this.menu.addMenuItem(this.stop_separator);
@@ -242,40 +257,103 @@ TimeTrackerButton.prototype = {
         this.actor.set_child(this._text);
 
         Mainloop.timeout_add_seconds(1, Lang.bind(this, function() {
-            this._hamster.GetCurrentFactRemote(Lang.bind(this, function(fact) {
-                if(fact == null || !fact.name) {
-                    this._text.set_text("No activity");
-                    this.activityCategory.set_text("No activity");
-                    this.startTrackingLabel.set_text("Start Tracking");
-                    this.stop_item.actor.visible = false;
-                    this.activity_category_item.actor.visible = false;
-                    this.stop_separator.actor.visible = false;
-                }
-                else {
-                    let minutes = Math.floor(fact.delta / 60);
-                    let hours = Math.floor(minutes / 60);
-                    minutes -= hours * 60;
-
-                    let time = " %d:%d".format(hours, minutes);
-
-                    let name = fact.name;
-                    if (fact.name.length > 15) {
-                        name = fact.name.substr(0, 14) + "..."
-                    }
-                    this._text.set_text(name + time);
-                    
-                    if (fact.category == '')
-                        this.activityCategory.set_text(fact.name);
-                    else
-                        this.activityCategory.set_text(fact.name+" - "+fact.category);
-                    this.startTrackingLabel.set_text("Change");
-                    this.stop_item.actor.visible = true;
-                    this.activity_category_item.actor.visible = true;
-                    this.stop_separator.actor.visible = true;
-                }
-            }));
+	    this._refreshCurrentTask();
             return true;
         }));
+
+	this._hamster.connect('FactsChanged', Lang.bind(this, this._onFactsChanged));
+    },
+
+    _updateCurrentFact: function(fact) {
+	// global.log('Inside _updateCurrentFact: ' + fact);
+        if(fact == null || !fact.name) {
+            this._text.set_text("No activity");
+            this.activityCategory.set_text("No activity");
+            this.startTrackingLabel.set_text("Start Tracking");
+            this.stop_item.actor.visible = false;
+            this.activity_category_item.actor.visible = false;
+            this.stop_separator.actor.visible = false;
+        } else {
+            let minutes = Math.floor(fact.delta / 60);
+            let hours = Math.floor(minutes / 60);
+            minutes -= hours * 60;
+	    
+            let time = " %d:%d".format(hours, minutes);
+	    
+            let name = fact.name;
+            if (fact.name.length > 15) {
+                name = fact.name.substr(0, 14) + "..."
+            }
+            this._text.set_text(name + time);
+            
+            if (fact.category == '')
+                this.activityCategory.set_text(fact.name);
+            else
+                this.activityCategory.set_text(fact.name+" - "+fact.category);
+            this.startTrackingLabel.set_text("Change");
+            this.stop_item.actor.visible = true;
+            this.activity_category_item.actor.visible = true;
+            this.stop_separator.actor.visible = true;
+        }
+    },
+
+    _withCurrentFact: function(fun) {
+	try {
+            this._hamster.GetTodaysFactsRemote(
+		Lang.bind(this,
+			  function (todaysFacts) {
+			      // global.log("GetTodaysFactsRemote returned " + todaysFacts);
+			      for(var i=0; i<todaysFacts.length; i++) {
+				  var fact = todaysFacts[i];
+				  fact.id = fact[0];
+				  fact.start = fact[1];
+				  fact.end = fact[2];
+				  fact.name = fact[4];
+				  fact.category = fact[6];
+				  fact.delta = fact[9];
+				  
+				  if (fact[2] == 0) {
+				      // Found current task
+				      // global.log("Found current fact:" + fact);
+				      try {
+					  fun(fact);
+				      } catch (err) {
+					  global.log("Error updating current fact: " + err);
+				      }
+				      return;
+				  }
+			      }
+
+			      // No current task was found
+			      this._updateCurrentFact(null);
+			  }
+			 )
+	    );	
+	} catch (err) {
+	    global.log('Failed to call GetTodaysFactsRemote: ' + err);
+	}	
+    },
+    
+    _refreshCurrentTask: function() {
+	this._withCurrentFact(Lang.bind(this, this._updateCurrentFact));
+    },
+
+    _stopCurrentTask: function() {
+	this._withCurrentFact(Lang.bind(this, function(fact) {
+	    try {
+		let timezoneOffset = (new Date().getTimezoneOffset()) * 60;
+		let end = Math.floor(Date.now()/1000) - timezoneOffset ;
+		global.log("start: " + fact.start + " end: " + end);
+		this._hamster.UpdateFactRemote(fact.id, fact.name, "", fact.start, end);
+	    } catch (err) {
+		global.log("Error calling UpdateFactRemote: " + err);
+	    }
+	}));
+    },
+
+    _onFactsChanged: function() {
+	// global.log('FactsChanged');
+	this._refreshCurrentTask();
     },
 
     _onButtonPress: function(actor, event) {
