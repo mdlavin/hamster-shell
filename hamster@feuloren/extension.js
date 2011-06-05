@@ -91,7 +91,7 @@ HamsterClient.prototype = {
 
          let box = new St.BoxLayout({style_class: "hamsterBox"});
          this.actor.add(box);
-         this.entry = new St.Entry({name: "activityEntry", hint_text: "Activity"});
+         this.entry = new St.Entry({name: "activityEntry", hint_text: "Enter new activity"});
          //box.add(this.entry, { expand: true });
          this.entry.clutter_text.connect('activate', Lang.bind(this, function (o, e) {
             let text = o.get_text();
@@ -117,15 +117,15 @@ HamsterClient.prototype = {
             //global.log("start time: -"+fact.start_time+"-");
             //global.log("end time: -"+fact.end_time+"-");
         }));
-         this.start_button = new St.Button({style_class: 'hamsterButton'});
-         this.start_button.set_child(new St.Label({text: "Start Tracking"}));
-         this.start_button.connect("clicked", Lang.bind(this, function() {
-            let text = this.entry.get_text();
-            this.entry.set_text("");
-            if (text != '')
-                this._parseAndSaveActivityInput(text);
-         }));
-         box.add(this.start_button);
+//         this.start_button = new St.Button({style_class: 'hamsterButton'});
+//         this.start_button.set_child(new St.Label({text: "Start Tracking"}));
+//         this.start_button.connect("clicked", Lang.bind(this, function() {
+//            let text = this.entry.get_text();
+//            this.entry.set_text("");
+//            if (text != '')
+//                this._parseAndSaveActivityInput(text);
+//         }));
+//         box.add(this.start_button);
 
      },
 
@@ -229,16 +229,16 @@ TimeTrackerButton.prototype = {
         hamsterItem.addActor(this._hamster.entry);
         this.menu.addMenuItem(hamsterItem);
 
-        this.start_item = new PopupMenu.PopupBaseMenuItem({reactive: false});
-        this.startTrackingLabel = new St.Label({text: "Start Tracking"});
-        this.start_item.addActor(this.startTrackingLabel);
-        this.start_item.connect("activate", Lang.bind(this._hamster, function() {
-            let text = this.entry.get_text();
-            this.entry.set_text("");
-            if (text != '')
-                this._parseAndSaveActivityInput(text);
-         }));
-        this.menu.addMenuItem(this.start_item);
+//      this.start_item = new PopupMenu.PopupBaseMenuItem({reactive: false});
+//      this.startTrackingLabel = new St.Label({text: "Start Tracking"});
+//        this.start_item.addActor(this.startTrackingLabel);
+//        this.start_item.connect("activate", Lang.bind(this._hamster, function() {
+//            let text = this.entry.get_text();
+//            this.entry.set_text("");
+//            if (text != '')
+//                this._parseAndSaveActivityInput(text);
+//         }));
+//        this.menu.addMenuItem(this.start_item);
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this.menu.addAction("Add older activity", Lang.bind(this, this._onSummary));
@@ -263,7 +263,7 @@ TimeTrackerButton.prototype = {
         if(fact == null || !fact.name) {
             this._text.set_text("No activity");
             this.activityCategory.set_text("No activity");
-            this.startTrackingLabel.set_text("Start Tracking");
+//            this.startTrackingLabel.set_text("Start Tracking");
             this.stop_item.actor.visible = false;
             this.activity_category_item.actor.visible = false;
             this.stop_separator.actor.visible = false;
@@ -287,7 +287,7 @@ TimeTrackerButton.prototype = {
                 this.activityCategory.set_text(fact.name);
             else
                 this.activityCategory.set_text(fact.name+" - "+fact.category);
-            this.startTrackingLabel.set_text("Change");
+//            this.startTrackingLabel.set_text("Change");
             this.stop_item.actor.visible = true;
             this.activity_category_item.actor.visible = true;
             this.stop_separator.actor.visible = true;
