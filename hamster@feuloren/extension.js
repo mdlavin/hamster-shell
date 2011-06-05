@@ -268,11 +268,14 @@ TimeTrackerButton.prototype = {
             this.activity_category_item.actor.visible = false;
             this.stop_separator.actor.visible = false;
         } else {
-            let minutes = Math.floor(fact.delta / 60);
-            let hours = Math.floor(minutes / 60);
-            minutes -= hours * 60;
+	    let minutes = Math.floor(fact.delta / 60);
+	    let time = " %d min".format(minutes);
+	    if (minutes >= 60) {
+		let hours = Math.floor(minutes / 60);
+		minutes -= hours * 60;
 	    
-            let time = " %d:%d".format(hours, minutes);
+		time = " %d:%d".format(hours, minutes);
+	    }
 	    
             let name = fact.name;
             if (fact.name.length > 15) {
