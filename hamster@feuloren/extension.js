@@ -89,22 +89,25 @@ HamsterClient.prototype = {
          this.actor.add(box);
          this.actor.add(new St.Label({text: "START NEW ACTIVITY"}));
 
-         let box = new St.BoxLayout({style_class: "hamsterBox"});
-         this.actor.add(box);
-         this.entry = new St.Entry({name: "activityEntry", hint_text: "Enter new activity"});
-         //box.add(this.entry, { expand: true });
-         this.entry.clutter_text.connect('activate', Lang.bind(this, function (o, e) {
-            let text = o.get_text();
-            o.set_text("");
-            if (text == '')
-                return true;
-            else
-                this._parseAndSaveActivityInput(text);
+         this.entry = new St.BoxLayout({style_class: "hamsterBox"});
+//         this.actor.add(box);
+         this.activity_entry = new St.Entry({style_class: "activityEntry", hint_text: "Enter new activity"});
+	this.entry.add(this.activity_entry);
+	this.tags_entry = new St.Entry({style_class: "activityEntry", hint_text: "Enter tags"});
+	this.entry.add(this.tags_entry);
 
-            return true;
-         }));
-         this.entry.clutter_text.connect('text-changed', Lang.bind(this, function() {
-            let text = this.entry.get_text();
+         this.activity_entry.clutter_text.connect('activate', Lang.bind(this, function (o, e) {
+	     this._submitNewTask();
+	     return true;
+	 }));
+
+	this.tags_entry.clutter_text.connect('activate', Lang.bind(this, function (o, e) {
+	     this._submitNewTask();
+	     return true;
+	 }));
+
+         this.activity_entry.clutter_text.connect('text-changed', Lang.bind(this, function() {
+            let text = this.activity_entry.get_text();
             if (text == '') {
                 //this.previewBox.hide();
                 return;
@@ -128,6 +131,19 @@ HamsterClient.prototype = {
 //         box.add(this.start_button);
 
      },
+
+    _submitNewTask: function() {
+	global.log("Entering _submitNewTask");
+        let activity_text = this.activity_entry.get_text();
+        if (activity_text == '') {
+            return;
+        } else {
+	    let tags_text = this.tags_entry.get_text();
+            this.activity_entry.set_text("");
+	    this.tags_entry.set_text("");
+            this._parseAndSaveActivityInput(activity_text, tags_text);	
+	}
+    },
 
     _parseActivityInput: function(text) {
         let fact = {activity: "", category: "", description: "",
@@ -187,10 +203,10 @@ HamsterClient.prototype = {
         return fact;
     },
 
-    _parseAndSaveActivityInput: function(text) {
+    _parseAndSaveActivityInput: function(activity_text, tags_text) {
 	// global.log("About to call AddFactRemote");
 	try {
-            this.AddFactRemote(text, "", 0,0);	
+            this.AddFactRemote(activity_text, tags_text, 0,0);	
 	    // global.log("Done calling AddFactRemote");
 	} catch (err) {
 	    global.log("Error calling AddFactRemote: " + err);
@@ -229,23 +245,16 @@ TimeTrackerButton.prototype = {
         hamsterItem.addActor(this._hamster.entry);
         this.menu.addMenuItem(hamsterItem);
 
-//      this.start_item = new PopupMenu.PopupBaseMenuItem({reactive: false});
-//      this.startTrackingLabel = new St.Label({text: "Start Tracking"});
-//        this.start_item.addActor(this.startTrackingLabel);
-//        this.start_item.connect("activate", Lang.bind(this._hamster, function() {
-//            let text = this.entry.get_text();
-//            this.entry.set_text("");
-//            if (text != '')
-//                this._parseAndSaveActivityInput(text);
-//         }));
-//        this.menu.addMenuItem(this.start_item);
-
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.menu.addAction("Show Summary", Lang.bind(this, this._onSummary));
 	this.menu.addAction("Open Hamster", Lang.bind(this, this._onOpenHamster));
 
-        this._text = new St.Label({text: "No activity"});
-        this.actor.set_child(this._text);
+	let summaryBox = new St.BoxLayout();
+        this._current_activity_label = new St.Label({style_class: "current_activity_label", text: "No activity"});
+        this._current_activity_time_label = new St.Label({style_class: "current_activity_time_label", text: ""});
+	summaryBox.add(this._current_activity_label);
+	summaryBox.add(this._current_activity_time_label, {expand: false, y_fill: false, y_align: St.Align.END });
+        this.actor.set_child(summaryBox);
 
         Mainloop.timeout_add_seconds(1, Lang.bind(this, function() {
 	    this._refreshCurrentTask();
@@ -258,7 +267,8 @@ TimeTrackerButton.prototype = {
     _updateCurrentFact: function(fact) {
 	// global.log('Inside _updateCurrentFact: ' + fact);
         if(fact == null || !fact.name) {
-            this._text.set_text("No activity");
+            this._current_activity_label.set_text("No activity");
+	    this._current_activity_time_label.set_text("");
             this.activityCategory.set_text("No activity");
 //            this.startTrackingLabel.set_text("Start Tracking");
             this.stop_item.actor.visible = false;
@@ -266,20 +276,20 @@ TimeTrackerButton.prototype = {
             this.stop_separator.actor.visible = false;
         } else {
 	    let minutes = Math.floor(fact.delta / 60);
-	    let time = " %d min".format(minutes);
+	    let time = "%d min".format(minutes);
 	    if (minutes >= 60) {
 		let hours = Math.floor(minutes / 60);
 		minutes -= hours * 60;
 	    
-		time = " %d:%d".format(hours, minutes);
+		time = "%d:%d".format(hours, minutes);
 	    }
 	    
             let name = fact.name;
             if (fact.name.length > 15) {
                 name = fact.name.substr(0, 14) + "..."
             }
-            this._text.set_text(name + time);
-            
+            this._current_activity_label.set_text(name);
+            this._current_activity_time_label.set_text(time);
             if (fact.category == '')
                 this.activityCategory.set_text(fact.name);
             else
